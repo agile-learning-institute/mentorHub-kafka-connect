@@ -1,24 +1,21 @@
 # mentorHub-kafka-connect
 
-This repo builds and publishes a custom Kafka-Connect contaienr with MongoDB and ElasticSearch plug-ins installed, and sources and sync's configured. See [Extending Confluent Images](https://docs.confluent.io/platform/current/installation/docker/development.html#extending-images) for information on how to install plugins. 
-
-See [Running Kafka Connect in Containers](https://developer.confluent.io/courses/kafka-connect/docker-containers/) for information about using kafka-connect containers.
+This repo builds and publishes a custom Kafka-Connect contaienr with MongoDB and ElasticSearch plug-ins installed, and sources and sink's configured. See [Extending Confluent Images](https://docs.confluent.io/platform/current/installation/docker/development.html#extending-images) for information on how to install plugins. See [Running Kafka Connect in Containers](https://developer.confluent.io/courses/kafka-connect/docker-containers/) for more information about using kafka-connect containers.
 
 ## Prerequisites
 - [Mentorhub Desktop Edition](https://github.com/agile-learning-institute/mentorHub/blob/main/mentorHub-developer-edition/README.md)
 
 ### Optional
-- [Kafka Cat (kcat)]() to work with kafka topics
+- [Kafka Cat (kcat)](https://docs.confluent.io/platform/current/installation/overview.html) to work with kafka topics. ``brew install kcat`` on Mac.
 
 # Contributing
-
 See [entrypoint.sh](./entrypoint.sh) for connector configuration information. 
 
 ## Build and test the Container Locally
 ```sh
 make container
 ```
-NOTE: This script does ``mh down`` and then builds the container and then starts the containers with ``mh up kafka-connect``
+NOTE: This script does ``mh down`` and then builds the container and then starts the needed containers with ``mh up kafka-connect``
 
 Once the container is running you can use the kafka-cat Rest API to interact with the connectors.
 
@@ -71,7 +68,7 @@ cat ./<data>.json | kcat -b localhost:9092 -t <topic> -P
 
 # Miscelaenous Stuff
 
-## Data to add a curriculum
+## Data to add a curriculum in Compass
 ```json
 ,
         "completed": [],
