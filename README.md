@@ -21,7 +21,17 @@ Once the container is running you can use the kafka-cat Rest API to interact wit
 
 ### Get a list of Connectors
 ```bash
-curl http://localhost:9093/connectors
+curl http://localhost:9093/connectors | jq
+```
+
+## Check the status of a connector
+```bash
+curl http://localhost:9093/connectors/<connector name>/status | jq
+```
+
+## Get the configuration of a connector
+```bash
+curl http://localhost:9093/connectors/<connector name>/config | jq
 ```
 
 ### (Re)Configure a Connector
