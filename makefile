@@ -6,4 +6,4 @@
 container:
 	mh down
 	docker build --tag ghcr.io/agile-learning-institute/mentorhub-kafka-connect:latest .
-	mh up kafkaonly
+	mh up kafka-connect
