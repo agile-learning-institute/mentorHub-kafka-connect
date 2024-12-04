@@ -76,9 +76,20 @@ cat ./<data>.json | kcat -b localhost:9092 -t <topic> -P
 # Observability and CI/CD considerations
 [GitHub Actions](./.github/workflows/docker-push.yml) are responsible for publishing a public container image.
 
-# Miscelaenous Stuff
+# Testing
 
-## Data to add a curriculum in Compass
+After using the commands above to build the container, you can watch the docker logs of the contaienr with 
+```bash
+docker logs mentorhub-kafka-connect-1 -f
+```
+
+Then open another terminal window and watch the topic ``mentorHub.curriculum``
+```bash
+kcat -b localhost:9092 -t mentorHub.curriculum -o end -C
+```
+
+Now open Mongo Compass, and connect to the database with the connection string ``mongodb://mongodb:27017/?replicaSet=rs0``, select the ``mentorHub`` database, and the ``curriculum`` collection, and click on "Add Data", "Insert Document" and then add the following text after the ``_id`` property, before the closing ``}``
+
 ```json
 ,
         "completed": [],
@@ -96,3 +107,5 @@ cat ./<data>.json | kcat -b localhost:9092 -t <topic> -P
             "correlationId": "ae078031-7de2-4519-bcbe-fbd5e72b69d3"
         }
 ```
+
+You should see the source log the change, kcat shoudld show the event, and the logs will probably show an error when the sink connector trys to process the event. 
