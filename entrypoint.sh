@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Global Configuration Values
-HOST=http://host.docker.internal:9093
+HOST=http://localhost:8083
 COLLECTIONS=("curriculum")
 
 # Launch Kafka Connect
