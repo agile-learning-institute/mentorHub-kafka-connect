@@ -19,6 +19,11 @@ NOTE: This script does ``mh down`` and then builds the container and then starts
 
 Once the container is running you can use the kafka-cat Rest API to interact with the connectors.
 
+### Get a list of installed plugins
+```bash
+curl --request GET 'http://localhost:9093/connector-plugins' | jq
+```
+
 ### Get a list of Connectors
 ```bash
 curl http://localhost:9093/connectors | jq
@@ -76,17 +81,100 @@ cat ./<data>.json | kcat -b localhost:9092 -t <topic> -P
 # Observability and CI/CD considerations
 [GitHub Actions](./.github/workflows/docker-push.yml) are responsible for publishing a public container image.
 
-# Testing
+# Testing Access from the command line
 
-After using the commands above to build the container, you can watch the docker logs of the contaienr with 
-```bash
-docker logs mentorhub-kafka-connect-1 -f
+### Test access to the MongoDB
+
+#### From outside of Docker
+```sh
+curl -v localhost:27017
 ```
+
+#### From the Kafka-Connect container
+```sh
+docker exec -it mentorhub-kafka-connect-1 curl -v mongodb:27017
+```
+
+#### Expected Reply
+```
+* Host {hostname}:27017 was resolved.
+....
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+```
+
+### Test access to the ElasticSearch Database
+
+#### From outside of Docker
+```sh
+curl -v localhost:9200
+```
+
+#### From the Kafka-Connect container
+```sh
+docker exec -it mentorhub-kafka-connect-1 curl -v elasticsearch:9200
+```
+
+#### Expected Reply
+```sh
+* Host {hostname}:9200 was resolved.
+....
+* Connection #0 to host localhost left intact
+```
+
+### Test access to the Kafka Event Bus
+
+#### From outside of Docker
+First write a test message to a topic. 
+```sh
+echo "test message" | kcat -P -b localhost:9092 -t test-topic
+```
+
+Then you can use kcat to read that topic
+```sh
+kcat -C -b localhost:9092 -t test-topic -o beginning -e
+```
+
+#### From the Kafka-Connect container
+Since kcat is on installed in the container we will use the kafka-console-consumer utility.
+```sh
+docker exec -it mentorhub-kafka-connect-1 kafka-console-consumer --bootstrap-server kafka:19092 --topic test-topic --from-beginning --max-messages 1
+```
+
+#### Expected Reply
+You should see the test message that was previously placed on the topic.
+
+### Test access to the Kafka-Connect Server
+
+#### From outside of Docker
+```sh
+curl localhost:9093/connectors
+```
+
+#### From the Kafka-Connect container
+```sh
+docker exec -it mentorhub-kafka-connect-1 curl localhost:8083/connectors
+```
+
+#### Expected Reply
+```
+[]
+```
+Or a list of connectors if they have been configured
+
+# Testing Connectors
+
+After using the commands above to build the container, you can watch the docker logs of the container with 
+### Review the logs of the kafka-connect container
+```bash
+mh tail kafka-connect
+```
+NOTE: This will tail the active log, page-up/down keys should work, ctrl-c to exit 
 
 Then open another terminal window and watch the topic ``mentorHub.curriculum``
 ```bash
 kcat -b localhost:9092 -t mentorHub.curriculum -o end -C
 ```
+NOTE: This will tail the topic showing new messages as they arrive, ctrl-c to exit
 
 Now open Mongo Compass, and connect to the database with the connection string ``mongodb://mongodb:27017/?replicaSet=rs0``, select the ``mentorHub`` database, and the ``curriculum`` collection, and click on "Add Data", "Insert Document" and then add the following text after the ``_id`` property, before the closing ``}``
 
@@ -108,4 +196,4 @@ Now open Mongo Compass, and connect to the database with the connection string `
         }
 ```
 
-You should see the source log the change, kcat shoudld show the event, and the logs will probably show an error when the sink connector trys to process the event. 
+You should see the source log the change, kcat should show the event, and the logs will probably show an error when the sink connector try's to process the event. 

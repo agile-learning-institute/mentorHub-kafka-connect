@@ -10,16 +10,16 @@ COLLECTIONS=("curriculum")
 echo "Waiting for Kafka Connect to start, listening on $HOST"
 while true; do
   curl_status=$(curl -s -o /dev/null -w "%{http_code}" $HOST)
-  echo "$(date) Kafka Connect listener HTTP state: $curl_status (waiting for 200)"
+  echo "$(date) From entrypoint.sh - Kafka Connect listener HTTP state: $curl_status (waiting for 200)"
 
   if [ "$curl_status" -eq 200 ]; then
-    echo "Kafka Connect is ready!"
+    echo "From entrypoint.sh - Kafka Connect is ready!"
     break
   fi
   sleep 5
 done
 
-echo "Kafka Connect started, Configuring Connectors"
+echo "From entrypoint.sh - Kafka Connect started, Configuring Connectors"
 
 for COLLECTION in "${COLLECTIONS[@]}"; do
   echo "Configuring source connector for collection: $COLLECTION"
@@ -49,7 +49,7 @@ for COLLECTION in "${COLLECTIONS[@]}"; do
       "value.converter.schemas.enable": false
     }'
 
-  echo -e "\nConnector configured for collection: $COLLECTION"
+  echo -e "\n- From entrypoint.sh - Connector configured for collection: $COLLECTION"
 done
 
 # Keep the container alive
