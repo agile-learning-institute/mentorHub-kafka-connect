@@ -7,7 +7,7 @@ COLLECTIONS=("curriculum")
 # Launch Kafka Connect
 /etc/confluent/docker/run &
 
-echo "Waiting for Kafka Connect to start, listening on $HOST"
+echo "From entrypoint.sh - Waiting for Kafka Connect to start, listening on $HOST"
 while true; do
   curl_status=$(curl -s -o /dev/null -w "%{http_code}" $HOST)
   echo "$(date) From entrypoint.sh - Kafka Connect listener HTTP state: $curl_status (waiting for 200)"
@@ -22,7 +22,7 @@ done
 echo "From entrypoint.sh - Kafka Connect started, Configuring Connectors"
 
 for COLLECTION in "${COLLECTIONS[@]}"; do
-  echo "Configuring source connector for collection: $COLLECTION"
+  echo "From entrypoint.sh - Configuring source connector for collection: $COLLECTION"
   curl -s -X PUT -H "Content-Type:application/json" \
     "$HOST/connectors/source-mongodb-$COLLECTION/config" \
     -d '{
@@ -53,4 +53,5 @@ for COLLECTION in "${COLLECTIONS[@]}"; do
 done
 
 # Keep the container alive
+echo "From entrypoint.sh - Connector configuration complete, good night!"
 sleep infinity
