@@ -1,6 +1,6 @@
 # mentorHub-kafka-connect
 
-This repo builds and publishes a custom Kafka-Connect contaienr with MongoDB and ElasticSearch plug-ins installed, and sources and sink's configured. See [Extending Confluent Images](https://docs.confluent.io/platform/current/installation/docker/development.html#extending-images) for information on how to install plugins. See [Running Kafka Connect in Containers](https://developer.confluent.io/courses/kafka-connect/docker-containers/) for more information about using kafka-connect containers.
+This repo builds and publishes a custom Kafka-Connect container with MongoDB and ElasticSearch plug-ins installed, and sources and sinks configured. See [Extending Confluent Images](https://docs.confluent.io/platform/current/installation/docker/development.html#extending-images) for information on how to install plugins. See [Running Kafka Connect in Containers](https://developer.confluent.io/courses/kafka-connect/docker-containers/) for more information about using kafka-connect containers.
 
 Table of Contents
 - [Contributing](#contributing)

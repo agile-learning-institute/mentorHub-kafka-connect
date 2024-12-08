@@ -35,4 +35,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/agile-learning-institute/mentorhub-curriculum-api:latest
+          tags: ghcr.io/agile-learning-institute/mentorhub-kafka-connect:latest
