@@ -2,7 +2,7 @@
 
 # Global Configuration Values
 HOST=http://localhost:8083
-COLLECTIONS=("curriculum")
+COLLECTIONS=("people")
 
 # Launch Kafka Connect
 /etc/confluent/docker/run &
@@ -35,23 +35,29 @@ for COLLECTION in "${COLLECTIONS[@]}"; do
       "output.format.key": "json"
     }'
 
-  echo "Configuring sync connector for collection: $COLLECTION"
+  echo "From entrypoint.sh - Configuring sink connector for collection: $COLLECTION"
   curl -s -X PUT -H "Content-Type:application/json" \
     "$HOST/connectors/sink-elasticsearch-$COLLECTION/config" \
     -d '{
       "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+      "tasks.max": "1",
       "topics": "mentorHub.'$COLLECTION'",
-      "connection.url": "http://elasticsearch:9200",
-      "type.name": "_doc",
       "key.ignore": true,
       "schema.ignore": true,
+      "connection.url": "http://elasticsearch:9200",
+      "type.name": "_doc",
+      "name": "sink-elasticsearch-people",
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "key.converter.schemas.enable": "false",
       "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-      "value.converter.schemas.enable": false
+      "value.converter.schemas.enable": "false"
     }'
 
-  echo -e "\n- From entrypoint.sh - Connector configured for collection: $COLLECTION"
+  echo -e "\n- From entrypoint.sh - Connectors configured for collection: $COLLECTION"
 done
 
 # Keep the container alive
-echo "From entrypoint.sh - Connector configuration complete, good night!"
+echo "#############################################################################"
+echo "#### From entrypoint.sh - Connector configuration complete, good night!" ####"
+echo "#############################################################################"
 sleep infinity

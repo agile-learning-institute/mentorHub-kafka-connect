@@ -8,7 +8,7 @@ Table of Contents
 - [Using Kafka Cat (kcat) with topics](#using-kcat-to-interact-with-kafka-topics)
 - [Testing Connectivity](#testing-connectivity)
 - [Observability and CI/CD Notes](#observability-and-cicd-considerations)
-- [Current State - Testing Connectors](#testing-connectors)
+- [Current State - Testing Connectors](#current-state)
 
 ---
 
@@ -21,7 +21,7 @@ Table of Contents
 - [Kafka Cat (kcat)](https://docs.confluent.io/platform/current/installation/overview.html) to work with kafka topics. ``brew install kcat`` on Mac.
 
 ## Code
-This repo creates a custom version of the confluent kafka-connect official container, using the [Dockerfile](./Dockerfile) to install the needed connector plugins and install the entrypoint.sh script. The [entrypoint.sh](./entrypoint.sh) script starts the connector server, then waits for it to be healthy, and then uses curl commands to configures the connectors. 
+This repo creates a custom version of the confluent kafka-connect official container, using the [Dockerfile](./Dockerfile) to install the needed connector plugins and install the entrypoint.sh script. The [entrypoint.sh](./entrypoint.sh) script starts the connector server, then waits for it to be healthy, and then uses curl commands to configure the connectors. 
 
 ## Build and test the Container Locally
 ```sh
@@ -193,39 +193,40 @@ Or a list of connectors if they have been configured
 
 
 # Current State
-All of the infrastructure appears to be working correctly, with a source and sink being configured. The source does see a new record added to the mongo database, and the sink does try to process the event, however the sync connector fails. Transformations are needed to make the sink connector function correctly. I want to keep the default Source configuration without any transformations because there may be future consumers that will want that event stream as is. 
+All of the infrastructure appears to be working correctly, and default mongo source and elasticsearch sink connectors are working. Transformations are needed to make the sink connector fully functional, extracting fullDocument, changing _id to collection_id and adding collection_name and then indexing into mentorhub. 
 
-To re-create the current progress, use the commands above to build and run the container. If it's already running you can watch the docker logs of the container with 
+To re-create the current progress, use the ``make container``command above to build and run the container. If it's already running you can watch the docker logs of the container with 
 ### Review the logs of the kafka-connect container
 ```bash
 mh tail kafka-connect
 ```
 NOTE: This will tail the active log, page-up/down keys should work, ctrl-c to exit after your done testing.
 
-Then open another terminal window and watch the topic ``mentorHub.curriculum``
+Then open another terminal window and watch the topic ``mentorHub.people``
 ```bash
-kcat -b localhost:9092 -t mentorHub.curriculum -o end -C
+kcat -b localhost:9092 -t mentorHub.people -o end -C
 ```
 NOTE: This will tail the topic showing new messages as they arrive, ctrl-c to exit when your done.
 
-Now open Mongo Compass, and connect to the database with the connection string ``mongodb://mongodb:27017/?replicaSet=rs0``, select the ``mentorHub`` database, and the ``curriculum`` collection, and click on "Add Data", "Insert Document" and then add the following text after the ``_id`` property, before the closing ``}``
-
-```json
-,
-        "completed": [],
-        "now": [],
-        "next": [],
-        "later": [
-            {"$oid": "999900000000000000000000"},
-            {"$oid": "999900000000000000000001"},
-            {"$oid": "999900000000000000000003"}
-        ],
-        "lastSaved": {
-            "atTime": {"$date": "2024-02-27T18:17:58"},
-            "byUser": {"$oid": "aaaa00000000000000000001"},
-            "fromIp": "192.168.1.3",
-            "correlationId": "ae078031-7de2-4519-bcbe-fbd5e72b69d3"
-        }
+Then and add the person-api to the running containers
+```bash
+mh up person-api
 ```
 
-You should see the source log the change, kcat should show the event on the topic, and the logs then show an error when the sink connector try's to process the event. 
+Then use this curl command to create a person document
+```bash
+curl -X POST http://localhost:8082/api/person/ \
+     -d '{"userName":"Foo", "description":"Some short description"}'
+```
+
+After adding this document the kafka-connect logs will show the source creating an event, and kcat shows the event on the bus, then kafka-connect logs will show the sink connector process the event. 
+
+You can visit the [Kibana dev_tool console](http://localhost:5601/app/dev_tools#/console) and get the list of indexes with
+```
+GET /_cat/indices
+```
+
+Then you can see the documents that have been indexed with this query
+```
+GET mentorhub.people/_search
+```
