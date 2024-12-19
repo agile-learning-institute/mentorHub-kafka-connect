@@ -2,11 +2,13 @@
   "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
   "tasks.max": "1",
   "topics": "mentorHub.people",
+  "key.ignore": true,
+  "schema.ignore": true,
   "connection.url": "http://elasticsearch:9200",
   "type.name": "_doc",
   "name": "sink-elasticsearch-people",
-  "key.ignore": true,
-  "schema.ignore": true,
+  "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "key.converter.schemas.enable": false,
   "value.converter": "org.apache.kafka.connect.json.JsonConverter",
   "value.converter.schemas.enable": false
 }

@@ -31,6 +31,37 @@ NOTE: This script does ``mh down`` and then builds the container and then starts
 
 Once the container is running you can use Kafka-Connect REST API to interact with the connectors, and use kcat to interact with the Kafka broker. If you are troubleshooting see [Testing Connectivity](#testing-connectivity) and [Current State]()
 
+## Testing new Connector Configs
+If you want to experiment with new connector configs, you can create those config's in the [source.json](./source.json) and [sink.json](./sink.json) files, and use the following commands to test your configurations. 
+
+### Update Source Connector
+```
+make update-source
+```
+NOTE - This will delete the existing ``source-mongodb-people`` connector, and deploy the connector configuration in [source.json](./source.json) and then check the status of the connector
+
+### Update Sink Connector
+```
+make update-sink
+```
+NOTE - This will delete the existing ``sink-elasticsearch-people`` connector, and deploy the connector configuration in [sink.json](./sink.json) and then check the status of the connector. 
+
+### List configured connectors
+```
+make list
+```
+
+### Check status of source & sink
+```
+make status
+```
+
+### Generate a Test Event
+```
+make test
+```
+NOTE: This expects the person-api to be running, you may need to run ``mh up person-api`` if this command returns a 404
+
 ---
 
 # Using the kafka-connect REST API.
@@ -208,7 +239,7 @@ kcat -b localhost:9092 -t mentorHub.people -o end -C
 ```
 NOTE: This will tail the topic showing new messages as they arrive, ctrl-c to exit when your done.
 
-Then and add the person-api to the running containers
+Then add the person-api to the running containers
 ```bash
 mh up person-api
 ```
@@ -230,3 +261,5 @@ Then you can see the documents that have been indexed with this query
 ```
 GET mentorhub.people/_search
 ```
+
+NOTE: After the first document is processed by the sink it will crash on the next document. After doing a ``make update-sink`` and allowing some time for the connector to start, the un-processed events on the broker will be processed, but the next event will cause the connector to crash again. 
