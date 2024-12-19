@@ -1,0 +1,8 @@
+{
+  "connector.class": "com.mongodb.kafka.connect.MongoSourceConnector",
+  "tasks.max": "1",
+  "connection.uri": "mongodb://mongodb:27017/?replicaSet=rs0",
+  "database": "mentorHub",
+  "collection": "people",
+  "output.format.value": "json"
+}
