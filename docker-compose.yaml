@@ -18,26 +18,6 @@ services:
       start_period: 0s
       retries: 30
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
-    profiles:
-      - all
-      - kafka-connect
-      - mongodb
-      - mongoonly
-      - elasticsearch
-      - elasticonly
-      - curriculum
-      - encounter
-      - partner
-      - person
-      - search
-      - topic
-      - curriculum-api
-      - encounter-api
-      - partner-api
-      - person-api
-      - search-api
-      - topic-api
-      - msm
 
   ##################################
   # Elasticsearch backing service
@@ -57,13 +37,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
-    profiles:
-      - all
-      - kafka-connect
-      - elasticsearch
-      - elasticonly
-      - search-api
-      - search
 
   ##################################
   # Kibana for Elasticsearch service
@@ -78,13 +51,6 @@ services:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
       XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: c69548d9027afcf4d55146b1d425a9f4c69548d9027afcf4d55146b1d425a9f4
-    profiles:
-      - all
-      - kafka-connect
-      - elasticsearch
-      - elasticonly
-      - search-api
-      - search
 
   ##################################
   # Zookeeper manager for Kafka cluster
@@ -92,9 +58,6 @@ services:
     image: zookeeper:3.9.2
     ports:
       - "2181:2181"
-    profiles:
-      - all
-      - kafka-connect
 
   ##################################
   # Kafka event bus
@@ -115,9 +78,6 @@ services:
       CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
     depends_on:
       - zookeeper
-    profiles:
-      - all
-      - kafka-connect
 
   ##################################
   # Kafka Connector (Custom connector with Mongo and Elastic plugins)
@@ -144,9 +104,6 @@ services:
         condition: service_completed_successfully
       initialize-elasticsearch:
         condition: service_completed_successfully
-    profiles:
-      - all
-      - kafka-connect
 
   ##################################
   # Backing Service Configuration Utilities
@@ -161,25 +118,6 @@ services:
       - CONNECTION_STRING=mongodb://mongodb:27017/?replicaSet=rs0
       - LOAD_TEST_DATA=true
       - DB_NAME=mentorHub
-    profiles:
-      - all
-      - kafka-connect
-      - elasticsearch
-      - elasticonly
-      - mongodb
-      - curriculum
-      - encounter
-      - partner
-      - person
-      - search
-      - topic
-      - curriculum-api
-      - encounter-api
-      - partner-api
-      - person-api
-      - search-api
-      - topic-api
-      - msm
 
   ##################################
   # Initialize Elasticsearch and load test data
@@ -196,10 +134,3 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
-    profiles:
-      - all
-      - elasticsearch
-      - kafka-connect
-      - search-api
-      - search
-

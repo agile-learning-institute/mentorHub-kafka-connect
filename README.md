@@ -263,3 +263,19 @@ GET mentorhub.people/_search
 ```
 
 NOTE: After the first document is processed by the sink it will crash on the next document. After doing a ``make update-sink`` and allowing some time for the connector to start, the un-processed events on the broker will be processed, but the next event will cause the connector to crash again. 
+
+#### Let's see how fast this is
+
+Start with a fresh ``make container`` and then do this in a separate terminal:
+```bash
+docker rm -f mentorhub-mongodb-1
+mh up mongoonly
+make status        Make sure both are running
+make update-sink   If needed
+make update-source If needed
+```
+Make sure you have the ``kcat`` command started to watch the topic, and then run
+```bash
+docker container start mentorhub-initialize-mongodb-1
+```
+You should see a bunch of events on the topic, and also find 31 documents with a ``GET mentorhub.people/_search`` in [Kibana](http://localhost:5601/app/dev_tools#/console) - if the documents are not there, you may have to do a fresh ``make update-sink`` and then the events will be processed when the sink restarts. 
