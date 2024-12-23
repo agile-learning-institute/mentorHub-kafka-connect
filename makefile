@@ -6,7 +6,7 @@
 container:
 	mh down
 	docker build --tag ghcr.io/agile-learning-institute/mentorhub-kafka-connect:latest .
-	mh up kafka-connect,people-api
+	mh up kafka-connect,person-api
 	mh tail kafka-connect
 
 update-sink:
