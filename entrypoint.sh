@@ -39,17 +39,17 @@ for COLLECTION in "${COLLECTIONS[@]}"; do
     "$HOST/connectors/sink-elasticsearch-$COLLECTION/config" \
     -d '{
       "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
-      "tasks.max": "1",
+      "name": "sink-elasticsearch-'$COLLECTION'",
       "topics": "mentorHub.'$COLLECTION'",
-      "key.ignore": true,
-      "schema.ignore": true,
       "connection.url": "http://elasticsearch:9200",
       "type.name": "_doc",
-      "name": "sink-elasticsearch-'$COLLECTION'",
+      "key.ignore": true,
+      "schema.ignore": true,
       "key.converter": "org.apache.kafka.connect.json.JsonConverter",
       "key.converter.schemas.enable": false,
       "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-      "value.converter.schemas.enable": false
+      "value.converter.schemas.enable": false,
+      "tasks.max": "1"
     }'
 
   echo -e "\n- From entrypoint.sh - Connectors configured for collection: $COLLECTION"

@@ -56,168 +56,31 @@ make list
 make status
 ```
 
+### Watch the mongodb-people Kafka topic
+```
+make watch
+```
+
 ### Generate a Test Event
 ```
 make test
 ```
 NOTE: This expects the person-api to be running, you may need to run ``mh up person-api`` if this command returns a 404
 
----
+### Reset MongoDb test data
+```
+make reset
+```
+This will remove and restart the MongoDb container, and then run the initialize-mongodb utility to load test data. This will generate 31 person change events.  
 
 # Using the kafka-connect REST API.
-
-## Get a list of installed plugins
-```bash
-curl --request GET 'http://localhost:9093/connector-plugins' | jq
-```
-
-## Get a list of Connectors
-```bash
-curl http://localhost:9093/connectors | jq
-```
-
-## Check the status of a connector
-```bash
-curl http://localhost:9093/connectors/<connector name>/status | jq
-```
-
-## Get the configuration of a connector
-```bash
-curl http://localhost:9093/connectors/<connector name>/config | jq
-```
-
-## (Re)Configure a Connector
-```bash
-curl -s -X PUT -H "Content-Type:application/json" \
-    http://localhost:9093/connectors/<connector name>/config \
-    -d '{
-        "connector.class": "<connector class name>",
-        "<option>"       : "<additional connector specific values>",
-    }'
-```
-See [entrypoint.sh](./entrypoint.sh) for details about the mongo source and elasticsearch sync connectors. 
-
-## Pause a Connector
-```bash
-curl --request PUT 'http://localhost:9093/connectors/<connector name>/pause'
-```
-
-## Resume a Connector
-```bash
-curl --request PUT 'http://localhost:9093/connectors/<connector name>/resume'
-```
-
-## Delete a Connector
-```bash
-curl --request DELETE 'http://localhost:9093/connectors/<connector name>'
-```
-
----
+Some of the make commands above wrap kafka-connect REST api calls. For more details you can see the [Kafka-Connect-API.md](./docs/Kafka-Connect-API.md) guide. 
 
 # Using kcat to interact with kafka topics
-You may want to monitor traffic on a topic in the kafka broker. You can use kafka cat (kcat)
-
-## kcat List Topics 
-```bash
-kcat -b localhost:9092 -L
-```
-You can use the topic names listed with the below commands
-
-## kcat Publish an event
-```bash
-cat ./<data>.json | kcat -b localhost:9092 -t <topic.name> -P
-```
-
-## kcat tail a topic
-```bash
-kcat -b localhost:9092 -t <topic.name> -o end -C
-```
-NOTE: This will tail the topic showing new messages as they arrive, ctrl-c to exit
-
----
+The ``make watch`` command uses ``kcat`` - to monitor traffic on our test topic. If you want to know more about kafka cat (kcat) see the [kcat Guide](./docs/kcat-guide.md).
 
 # Testing Connectivity
-The Kafka-Connect container must successfully connect to the kafka broker, mongodb database, and elasticsearch database in order to function. You can use the following tests to check that the proper network connectivity is in place. 
-
-## Test access to the MongoDB
-
-#### From outside of Docker
-```sh
-curl -v localhost:27017
-```
-
-#### From the Kafka-Connect container
-```sh
-docker exec -it mentorhub-kafka-connect-1 curl -v mongodb:27017
-```
-
-#### Expected Reply
-```
-* Host {hostname}:27017 was resolved.
-....
-It looks like you are trying to access MongoDB over HTTP on the native driver port.
-```
-
-## Test access to the ElasticSearch Database
-
-#### From outside of Docker
-```sh
-curl -v localhost:9200
-```
-
-#### From the Kafka-Connect container
-```sh
-docker exec -it mentorhub-kafka-connect-1 curl -v elasticsearch:9200
-```
-
-#### Expected Reply
-```sh
-* Host {hostname}:9200 was resolved.
-....
-* Connection #0 to host localhost left intact
-```
-
-## Test access to the Kafka Event Bus
-
-#### From outside of Docker
-First write a test message to a topic. 
-```sh
-echo "test message" | kcat -P -b localhost:9092 -t test-topic
-```
-
-Then you can use kcat to read that topic
-```sh
-kcat -C -b localhost:9092 -t test-topic -o beginning -e
-```
-
-#### From the Kafka-Connect container
-Since kcat is on installed in the container we will use the kafka-console-consumer utility.
-```sh
-docker exec -it mentorhub-kafka-connect-1 kafka-console-consumer --bootstrap-server kafka:19092 --topic test-topic --from-beginning --max-messages 1
-```
-
-#### Expected Reply
-You should see the test message that was previously placed on the topic.
-
-## Test access to the Kafka-Connect Server
-
-#### From outside of Docker
-```sh
-curl localhost:9093/connectors
-```
-
-#### From the Kafka-Connect container
-```sh
-docker exec -it mentorhub-kafka-connect-1 curl localhost:9093/connectors
-```
-
-#### Expected Reply
-```
-[]
-```
-Or a list of connectors if they have been configured
-
----
+The Kafka-Connect container must successfully connect to the kafka broker, mongodb database, and elasticsearch database in order to function. See [connectivity.md](./docs/connectivity.md) for instructions on how to test network connectivity. 
 
 # Observability and CI/CD considerations
 [GitHub Actions](./.github/workflows/docker-push.yml) are responsible for publishing a public container image.
@@ -244,13 +107,15 @@ Then add the person-api to the running containers
 mh up person-api
 ```
 
-Then use this curl command to create a person document
+Then use these make commands to generate test events, update sink config, etc.
 ```bash
-curl -X POST http://localhost:8082/api/person/ \
-     -d '{"userName":"Foo", "description":"Some short description"}'
+make test 
+make update-sink
+make status
+make list
 ```
 
-After adding this document the kafka-connect logs will show the source creating an event, and kcat shows the event on the bus, then kafka-connect logs will show the sink connector process the event. 
+After adding a document with ``make test`` the kafka-connect logs will show the source creating an event, and kcat shows the event on the bus, then kafka-connect logs will show the sink connector process the event. 
 
 You can visit the [Kibana dev_tool console](http://localhost:5601/app/dev_tools#/console) and get the list of indexes with
 ```
@@ -266,16 +131,10 @@ NOTE: After the first document is processed by the sink it will crash on the nex
 
 #### Let's see how fast this is
 
-Start with a fresh ``make container`` and then do this in a separate terminal:
-```bash
-docker rm -f mentorhub-mongodb-1
-mh up mongoonly
-make status        Make sure both are running
-make update-sink   If needed
-make update-source If needed
-```
-Make sure you have the ``kcat`` command started to watch the topic, and then run
-```bash
-docker container start mentorhub-initialize-mongodb-1
-```
+Start with a fresh ``make container`` and then use ``make status`` to check connector status.
+
+Make sure you have used ``make watch`` to watch the topic
+
+Use ``make reset`` to reset the mongo container and reload test data.
+
 You should see a bunch of events on the topic, and also find 31 documents with a ``GET mentorhub.people/_search`` in [Kibana](http://localhost:5601/app/dev_tools#/console) - if the documents are not there, you may have to do a fresh ``make update-sink`` and then the events will be processed when the sink restarts. 

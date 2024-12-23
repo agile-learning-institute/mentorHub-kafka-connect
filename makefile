@@ -1,6 +1,6 @@
 # Makefile
 
-.PHONY: container update list status test
+.PHONY: container update-sink update-source list watch test reset status 
 
 # Build and run the Docker container
 container:
@@ -22,8 +22,16 @@ update-source:
 list:
 	curl http://localhost:9093/connectors | jq
 
+watch:
+	kcat -b localhost:9092 -t mentorHub.people -o end -C
+
 test:
 	curl -X POST http://localhost:8082/api/person/ -d '{"userName":"Foo", "description":"Some short description"}' | jq
+
+reset:
+	docker rm -f mentorhub-mongodb-1
+	mh up mongoonly
+	docker container start mentorhub-initialize-mongodb-1
 
 status:	
 	curl http://localhost:9093/connectors/sink-elasticsearch-people/status | jq
